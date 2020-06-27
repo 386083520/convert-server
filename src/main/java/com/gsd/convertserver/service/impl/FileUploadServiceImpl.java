@@ -1,12 +1,17 @@
 package com.gsd.convertserver.service.impl;
 
+import com.gsd.convertserver.entity.FileUpload;
+import com.gsd.convertserver.mapper.FileUploadMapper;
+import com.gsd.convertserver.models.qo.FileInfo;
 import com.gsd.convertserver.service.FileUploadService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.util.Date;
 import java.util.UUID;
 
 @Service
@@ -15,18 +20,27 @@ public class FileUploadServiceImpl implements FileUploadService{
     @Value("${convert.file.path}")
     private String convertFilePath;
 
+    @Autowired
+    FileUploadMapper fileUploadMapper;
+
     @Override
-    public String uploadFile(MultipartFile file) {
-        String filename = file.getOriginalFilename();
-        String uuid = UUID.randomUUID().toString().replace("-", "");
-        String fullPath = convertFilePath.concat("/").concat(uuid);
+    public String uploadFile(FileInfo fileInfo) {
+        FileUpload fileUpload = new FileUpload();
+        fileUpload.setUuid(fileInfo.getUuid());
+        fileUpload.setConvertType(fileInfo.getConvertType());
+        fileUpload.setFileName(fileInfo.getFile().getOriginalFilename());
+        fileUpload.setCreateTime(new Date());
+        fileUpload.setUpdateTime(new Date());
+        fileUploadMapper.insert(fileUpload);
+        String filename = fileInfo.getFile().getOriginalFilename();
+        String fullPath = convertFilePath.concat("/").concat(fileInfo.getUuid());
         try {
-            InputStream inputStream = file.getInputStream();
+            InputStream inputStream = fileInfo.getFile().getInputStream();
             writeFile(inputStream, fullPath, filename);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return uuid + "/" + filename;
+        return "";
     }
 
     private void writeFile(InputStream inputStream, String fullPath, String fileName) {

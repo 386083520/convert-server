@@ -18,8 +18,8 @@ public class FileDownloadController {
     FileDownloadService fileDownloadService;
 
     @GetMapping(value = "/downloadFile")
-    public void downloadFile(HttpServletResponse response, @RequestParam String filePath) {
-        fileDownloadService.downloadFile(response, filePath);
+    public void downloadFile(HttpServletResponse response, String uuid) {
+        fileDownloadService.downloadFile(response, uuid);
     }
 
 }

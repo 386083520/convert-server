@@ -20,8 +20,9 @@ public class FileUploadController {
     FileUploadService fileUploadService;
 
     @PostMapping(value = "/uploadFile")
-    public ResponseData<String> uploadFile(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
-        return ResponseData.success(fileUploadService.uploadFile(file));
+    public ResponseData<String> uploadFile(FileInfo fileInfo, HttpServletRequest request) {
+        fileUploadService.uploadFile(fileInfo);
+        return ResponseData.success("");
     }
 
 
