@@ -14,13 +14,22 @@ public class GhostUtils {
     @Value("${gs.path}")
     private String gsPath;
     public String fileConvert(String input, String output) {
+        String[] gsArgs = {gsPath, "-sDEVICE=pdfwrite", "-dPDFSETTINGS=/ebook", "-dNOPAUSE",
+                "-dBATCH", "-dQUIET", "-sOutputFile="+output, input};
+        return convert(input, output, gsArgs);
+    }
+
+    public String pdfToImg(String input, String output) {
+        String[] gsArgs = {gsPath, "-sDEVICE=jpeg", "-r250","-dNOPAUSE", "-dBATCH", "-dQUIET", "-sOutputFile=" + output + "/%d.jpg" , input};
+        return convert(input, output, gsArgs);
+    }
+
+    public String convert(String input, String output, String[] gsArgs) {
         long startTimeMillis = System.currentTimeMillis();
         if(input == null) {
             log.error("待转换文件为空...");
             return "转换失败";
         }
-        String[] gsArgs = {gsPath, "-sDEVICE=pdfwrite", "-dPDFSETTINGS=/ebook", "-dNOPAUSE",
-        "-dBATCH", "-dQUIET", "-sOutputFile="+output, input};
         try {
             Process process = new ProcessBuilder(gsArgs).redirectErrorStream(true).start();
             while(process.isAlive()) {

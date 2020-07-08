@@ -10,6 +10,7 @@ import com.gsd.convertserver.service.FileConvertService;
 import com.gsd.convertserver.utils.GhostUtils;
 import com.gsd.convertserver.utils.OfficeUtils;
 import com.gsd.convertserver.utils.TimeString;
+import com.gsd.convertserver.utils.ZipUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -76,5 +79,41 @@ public class FileConvertServiceImpl implements FileConvertService{
         }else {
             return "";
         }
+    }
+
+    @Override
+    public String pdfToImg(FileInfo fileInfo) {
+        String uuid = fileInfo.getUuid();
+        List<FileUpload> selectList = fileUploadMapper.selectList(new EntityWrapper<FileUpload>().eq("uuid", uuid));
+        if(!CollectionUtils.isEmpty(selectList)) {
+            FileUpload fileUpload1 = selectList.get(0);
+            String fullPath = convertFilePath.concat("/").concat(uuid);
+            String inputPath = fullPath.concat("/").concat(fileUpload1.getFileName());
+            String fileName = new TimeString().getTimeString();
+            String outputPath = fullPath.concat("/").concat(fileName);
+            File file = new File(outputPath);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+            String[] srcFiles = new String[1];
+            srcFiles[0] = outputPath;
+            String zipFile = outputPath.concat(".zip");
+            String fileConvertCost = ghostUtils.pdfToImg(inputPath, outputPath);
+            try {
+                ZipUtils.toZip2(srcFiles, zipFile, false);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            FileConvert fileConvert = new FileConvert();
+            fileConvert.setConvertCost(fileConvertCost);
+            fileConvert.setUuid(uuid);
+            fileConvert.setFileName(fileName.concat(".").concat("zip"));
+            fileConvert.setFilePath(uuid.concat("/").concat(fileName).concat(".").concat("zip"));
+            fileConvert.setCreateTime(new Date());
+            fileConvert.setUpdateTime(new Date());
+            fileConvertMapper.insert(fileConvert);
+            return fileConvertCost;
+        }
+        return null;
     }
 }
