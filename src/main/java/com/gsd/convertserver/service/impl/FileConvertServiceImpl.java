@@ -7,6 +7,7 @@ import com.gsd.convertserver.mapper.FileConvertMapper;
 import com.gsd.convertserver.mapper.FileUploadMapper;
 import com.gsd.convertserver.models.qo.FileInfo;
 import com.gsd.convertserver.service.FileConvertService;
+import com.gsd.convertserver.utils.GhostUtils;
 import com.gsd.convertserver.utils.OfficeUtils;
 import com.gsd.convertserver.utils.TimeString;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,8 @@ import java.util.UUID;
 public class FileConvertServiceImpl implements FileConvertService{
     @Resource
     private OfficeUtils  officeUtils;
+    @Resource
+    private GhostUtils ghostUtils;
     @Value("${convert.file.path}")
     private String convertFilePath;
 
@@ -35,6 +38,8 @@ public class FileConvertServiceImpl implements FileConvertService{
 
     @Override
     public String convertFile(FileInfo fileInfo) {
+        String fileType = "";
+        String fileConvertCost = "0";
         String uuid = fileInfo.getUuid();
         FileUpload fileUpload = new FileUpload();
         fileUpload.setUuid(uuid);
@@ -46,12 +51,24 @@ public class FileConvertServiceImpl implements FileConvertService{
             String fileName = new TimeString().getTimeString();
             log.info("文件名：" + fileName);
             String outputPath = fullPath.concat("/").concat(fileName).concat(".").concat("pdf");
-            String fileConvertCost = officeUtils.fileConvert(inputPath, outputPath);
+            String convertType = fileUpload1.getConvertType();
+            if(convertType.equals("pdfCompress")) {
+                fileConvertCost = ghostUtils.fileConvert(inputPath, outputPath);
+                fileType = "pdf";
+            }
+            if(convertType.equals("word2pdf")) {
+                fileConvertCost = officeUtils.fileConvert(inputPath, outputPath);
+                fileType = "pdf";
+            }
+            if(convertType.equals("txt2pdf")) {
+                fileConvertCost = officeUtils.fileConvert(inputPath, outputPath);
+                fileType = "pdf";
+            }
             FileConvert fileConvert = new FileConvert();
             fileConvert.setConvertCost(fileConvertCost);
             fileConvert.setUuid(uuid);
             fileConvert.setFileName(fileName.concat(".").concat("pdf"));
-            fileConvert.setFilePath(uuid.concat("/").concat(fileName).concat(".").concat("pdf"));
+            fileConvert.setFilePath(uuid.concat("/").concat(fileName).concat(".").concat(fileType));
             fileConvert.setCreateTime(new Date());
             fileConvert.setUpdateTime(new Date());
             fileConvertMapper.insert(fileConvert);
