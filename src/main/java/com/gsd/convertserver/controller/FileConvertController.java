@@ -26,4 +26,9 @@ public class FileConvertController {
     public ResponseData<String> pdfToImg(@RequestBody FileInfo fileInfo) {
         return ResponseData.success(fileConvertService.pdfToImg(fileInfo));
     }
+
+    @PostMapping(value = "/imgToPdf")
+    public ResponseData<String> imgToPdf(@RequestBody FileInfo fileInfo) {
+        return ResponseData.success();
+    }
 }

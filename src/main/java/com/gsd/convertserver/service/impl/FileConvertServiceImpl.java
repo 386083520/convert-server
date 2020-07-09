@@ -98,7 +98,7 @@ public class FileConvertServiceImpl implements FileConvertService{
             String[] srcFiles = new String[1];
             srcFiles[0] = outputPath;
             String zipFile = outputPath.concat(".zip");
-            String fileConvertCost = ghostUtils.pdfToImg(inputPath, outputPath);
+            String fileConvertCost = ghostUtils.pdfToImg(inputPath, outputPath, fileInfo.getResolutionValue());
             try {
                 ZipUtils.toZip2(srcFiles, zipFile, false);
             } catch (Exception e) {

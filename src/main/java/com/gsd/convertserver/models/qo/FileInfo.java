@@ -10,4 +10,5 @@ public class FileInfo {
     private String convertType;
     private String fileName;
     private MultipartFile file;
+    private String resolutionValue;
 }

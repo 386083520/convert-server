@@ -19,8 +19,8 @@ public class GhostUtils {
         return convert(input, output, gsArgs);
     }
 
-    public String pdfToImg(String input, String output) {
-        String[] gsArgs = {gsPath, "-sDEVICE=jpeg", "-r250","-dNOPAUSE", "-dBATCH", "-dQUIET", "-sOutputFile=" + output + "/%d.jpg" , input};
+    public String pdfToImg(String input, String output, String resolutionValue) {
+        String[] gsArgs = {gsPath, "-sDEVICE=jpeg", "-r" + resolutionValue,"-dNOPAUSE", "-dBATCH", "-dQUIET", "-sOutputFile=" + output + "/%d.jpg" , input};
         return convert(input, output, gsArgs);
     }
 
