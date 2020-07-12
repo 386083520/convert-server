@@ -6,12 +6,15 @@ import com.gsd.convertserver.entity.FileUpload;
 import com.gsd.convertserver.mapper.FileConvertMapper;
 import com.gsd.convertserver.models.qo.FileInfo;
 import com.gsd.convertserver.service.FileDownloadService;
+import com.gsd.convertserver.utils.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
@@ -22,8 +25,10 @@ import java.util.List;
 public class FileDownloadServiceImpl implements FileDownloadService{
     @Value("${convert.file.path}")
     private String convertFilePath;
-    @Autowired
+    @Resource
     FileConvertMapper fileConvertMapper;
+    @Value("${fastdfs.url}")
+    private String fastdfsUrl;
     @Override
     public void downloadFile(HttpServletResponse response, String uuid) {
         if(uuid!=null) {
@@ -31,9 +36,9 @@ public class FileDownloadServiceImpl implements FileDownloadService{
             fileConvert.setUuid(uuid);
             List<FileConvert> selectList = fileConvertMapper.selectList(new EntityWrapper<FileConvert>().eq("uuid", uuid));
             if(!CollectionUtils.isEmpty(selectList)) {
-                String fullPath = convertFilePath.concat("/").concat(selectList.get(0).getFilePath());
-                File file = new File(fullPath);
-                long length = file.length();
+                String fullPath = fastdfsUrl.concat(selectList.get(0).getFilePath());
+                long length = Long.parseLong(selectList.get(0).getFileSize());
+                log.info("length: {}", length);
                 if(length <= Integer.MAX_VALUE) {
                     response.setContentLength((int) length);
                 }else {
@@ -45,11 +50,9 @@ public class FileDownloadServiceImpl implements FileDownloadService{
                 response.setCharacterEncoding("UTF-8");
                 response.setHeader("Content-Disposition", "attachment;filename=\"" + selectList.get(0).getFileName() + "\"");
                 byte[] buffer = new byte[1024*100];
-                FileInputStream fis = null;
                 BufferedInputStream bis = null;
                 try {
-                    fis = new FileInputStream(file);
-                    bis = new BufferedInputStream(fis);
+                    bis = new BufferedInputStream(FileUtil.getFileStream(fullPath));
                     OutputStream os = response.getOutputStream();
                     int i = bis.read(buffer);
                     int sizeRead = 0;
@@ -69,13 +72,6 @@ public class FileDownloadServiceImpl implements FileDownloadService{
                     if(bis != null) {
                         try {
                             bis.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if(fis != null) {
-                        try {
-                            fis.close();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }

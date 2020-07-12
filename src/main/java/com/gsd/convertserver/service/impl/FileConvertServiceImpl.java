@@ -7,18 +7,18 @@ import com.gsd.convertserver.mapper.FileConvertMapper;
 import com.gsd.convertserver.mapper.FileUploadMapper;
 import com.gsd.convertserver.models.qo.FileInfo;
 import com.gsd.convertserver.service.FileConvertService;
-import com.gsd.convertserver.utils.GhostUtils;
-import com.gsd.convertserver.utils.OfficeUtils;
-import com.gsd.convertserver.utils.TimeString;
-import com.gsd.convertserver.utils.ZipUtils;
+import com.gsd.convertserver.utils.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -33,48 +33,59 @@ public class FileConvertServiceImpl implements FileConvertService{
     private GhostUtils ghostUtils;
     @Value("${convert.file.path}")
     private String convertFilePath;
+    @Value("${fastdfs.url}")
+    private String fastdfsUrl;
 
-    @Autowired
+
+    @Resource
     FileUploadMapper fileUploadMapper;
-    @Autowired
+    @Resource
     FileConvertMapper fileConvertMapper;
+
+    @Resource
+    private FileDfsUtil fileDfsUtil ;
 
     @Override
     public String convertFile(FileInfo fileInfo) {
-        String fileType = "";
         String fileConvertCost = "0";
         String uuid = fileInfo.getUuid();
-        FileUpload fileUpload = new FileUpload();
-        fileUpload.setUuid(uuid);
         List<FileUpload> selectList = fileUploadMapper.selectList(new EntityWrapper<FileUpload>().eq("uuid", uuid));
         if(!CollectionUtils.isEmpty(selectList)) {
-            FileUpload fileUpload1 = selectList.get(0);
+            FileUpload fileUpload = selectList.get(0);
             String fullPath = convertFilePath.concat("/").concat(uuid);
-            String inputPath = fullPath.concat("/").concat(fileUpload1.getFileName());
+            String inputPath = fastdfsUrl+fileUpload.getFilePath();
+            InputStream inputStream = FileUtil.getFileStream(inputPath);
+            String writeFilePath = FileUtil.writeFile(inputStream, fullPath, fileUpload.getFileName());
+            log.info("inputPath, {}", inputPath);
             String fileName = new TimeString().getTimeString();
             log.info("文件名：" + fileName);
             String outputPath = fullPath.concat("/").concat(fileName).concat(".").concat("pdf");
-            String convertType = fileUpload1.getConvertType();
+            String convertType = fileUpload.getConvertType();
             if(convertType.equals("pdfCompress")) {
-                fileConvertCost = ghostUtils.fileConvert(inputPath, outputPath);
-                fileType = "pdf";
+                fileConvertCost = ghostUtils.fileConvert(writeFilePath, outputPath);
             }
             if(convertType.equals("word2pdf")) {
-                fileConvertCost = officeUtils.fileConvert(inputPath, outputPath);
-                fileType = "pdf";
+                fileConvertCost = officeUtils.fileConvert(writeFilePath, outputPath);
             }
             if(convertType.equals("txt2pdf")) {
-                fileConvertCost = officeUtils.fileConvert(inputPath, outputPath);
-                fileType = "pdf";
+                fileConvertCost = officeUtils.fileConvert(writeFilePath, outputPath);
             }
-            FileConvert fileConvert = new FileConvert();
-            fileConvert.setConvertCost(fileConvertCost);
-            fileConvert.setUuid(uuid);
-            fileConvert.setFileName(fileName.concat(".").concat("pdf"));
-            fileConvert.setFilePath(uuid.concat("/").concat(fileName).concat(".").concat(fileType));
-            fileConvert.setCreateTime(new Date());
-            fileConvert.setUpdateTime(new Date());
-            fileConvertMapper.insert(fileConvert);
+            try {
+                MultipartFile mulFileByPath = FileUtil.getMulFileByPath(outputPath);
+                String path = fileDfsUtil.upload(mulFileByPath) ;
+                FileConvert fileConvert = new FileConvert();
+                fileConvert.setConvertCost(fileConvertCost);
+                fileConvert.setUuid(uuid);
+                fileConvert.setFileName(fileName.concat(".").concat("pdf"));
+                fileConvert.setFilePath(path);
+                fileConvert.setFileSize(mulFileByPath.getSize()+"");
+                fileConvert.setCreateTime(new Date());
+                fileConvert.setUpdateTime(new Date());
+                fileConvertMapper.insert(fileConvert);
+                FileUtil.deleteDir(fullPath);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             return fileConvertCost;
         }else {
             return "";

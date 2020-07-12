@@ -21,6 +21,10 @@ public class FileUpload {
     private String fileType;
     @TableField(value = "file_name")
     private String fileName;
+    @TableField(value = "file_path")
+    private String filePath;
+    @TableField(value = "file_size")
+    private String fileSize;
     @TableField(value = "create_time")
     private Date createTime;
     @TableField(value = "update_time")
