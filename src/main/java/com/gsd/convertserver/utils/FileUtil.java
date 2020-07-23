@@ -73,10 +73,10 @@ public class FileUtil {
         return null;
     }
 
-    public static MultipartFile getMulFileByPath(String picPath) {
+    public static MultipartFile getMulFileByPath(String filePath) {
+        FileInputStream input = null;
         try {
-            File file = new File(picPath);
-            FileInputStream input = null;
+            File file = new File(filePath);
             input = new FileInputStream(file);
             MultipartFile multipartFile =new MockMultipartFile("file", file.getName(), "text/plain", IOUtils.toByteArray(input));
             return multipartFile;
@@ -84,6 +84,14 @@ public class FileUtil {
             e.printStackTrace();
             log.error("file转MultipartFile失败");
             return null;
+        }finally {
+            if(input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 

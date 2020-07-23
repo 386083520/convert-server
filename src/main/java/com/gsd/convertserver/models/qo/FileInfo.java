@@ -8,6 +8,7 @@ public class FileInfo {
     private String uuid;
     private String filePath;
     private String convertType;
+    private String fileType;
     private String fileName;
     private MultipartFile file;
     private String resolutionValue;
