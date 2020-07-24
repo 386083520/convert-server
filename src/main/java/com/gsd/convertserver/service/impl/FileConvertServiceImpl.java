@@ -94,6 +94,9 @@ public class FileConvertServiceImpl implements FileConvertService{
             if(convertType.equals("img2txt")) {
                 fileConvertCost = officeUtils.img2txt(writeFilePath, outputPath);
             }
+            if(convertType.equals("removePage")) {
+                fileConvertCost = ghostUtils.fileConvert(writeFilePath, outputPath);
+            }
             try {
                 MultipartFile mulFileByPath = FileUtil.getMulFileByPath(outputPath);
                 String path = fileDfsUtil.upload(mulFileByPath) ;
