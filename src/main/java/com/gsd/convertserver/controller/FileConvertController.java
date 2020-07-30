@@ -2,6 +2,7 @@ package com.gsd.convertserver.controller;
 
 import com.gsd.convertserver.models.ResponseData;
 import com.gsd.convertserver.models.qo.FileInfo;
+import com.gsd.convertserver.models.qo.ProposeInfoQo;
 import com.gsd.convertserver.service.FileConvertService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,5 +31,10 @@ public class FileConvertController {
     @PostMapping(value = "/imgToPdf")
     public ResponseData<String> imgToPdf(@RequestBody FileInfo fileInfo) {
         return ResponseData.success();
+    }
+
+    @PostMapping(value = "/propose")
+    public ResponseData<String> propose(@RequestBody ProposeInfoQo proposeInfoQo) {
+        return ResponseData.success(fileConvertService.proposeInsert(proposeInfoQo));
     }
 }

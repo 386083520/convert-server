@@ -3,14 +3,15 @@ package com.gsd.convertserver.service.impl;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.gsd.convertserver.entity.FileConvert;
 import com.gsd.convertserver.entity.FileUpload;
+import com.gsd.convertserver.entity.ProposeInfo;
 import com.gsd.convertserver.mapper.FileConvertMapper;
 import com.gsd.convertserver.mapper.FileUploadMapper;
+import com.gsd.convertserver.mapper.ProposeInfoMapper;
 import com.gsd.convertserver.models.qo.FileInfo;
+import com.gsd.convertserver.models.qo.ProposeInfoQo;
 import com.gsd.convertserver.service.FileConvertService;
 import com.gsd.convertserver.utils.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -19,10 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -41,6 +40,8 @@ public class FileConvertServiceImpl implements FileConvertService{
     FileUploadMapper fileUploadMapper;
     @Resource
     FileConvertMapper fileConvertMapper;
+    @Resource
+    ProposeInfoMapper proposeInfoMapper;
 
     @Resource
     private FileDfsUtil fileDfsUtil ;
@@ -51,7 +52,7 @@ public class FileConvertServiceImpl implements FileConvertService{
         String uuid = fileInfo.getUuid();
         List<FileUpload> selectList = fileUploadMapper.selectList(new EntityWrapper<FileUpload>().eq("uuid", uuid));
         if(!CollectionUtils.isEmpty(selectList)) {
-            FileUpload fileUpload = selectList.get(0);
+            FileUpload fileUpload = selectList.get(selectList.size() - 1);
             String fullPath = convertFilePath.concat("/").concat(uuid);
             String inputPath = fastdfsUrl+fileUpload.getFilePath();
             InputStream inputStream = FileUtil.getFileStream(inputPath);
@@ -116,7 +117,7 @@ public class FileConvertServiceImpl implements FileConvertService{
         String uuid = fileInfo.getUuid();
         List<FileUpload> selectList = fileUploadMapper.selectList(new EntityWrapper<FileUpload>().eq("uuid", uuid));
         if(!CollectionUtils.isEmpty(selectList)) {
-            FileUpload fileUpload = selectList.get(0);
+            FileUpload fileUpload = selectList.get(selectList.size() - 1);
             String fullPath = convertFilePath.concat("/").concat(uuid);
             String inputPath = fastdfsUrl+fileUpload.getFilePath();
             String fileName = new TimeString().getTimeString();
@@ -157,5 +158,14 @@ public class FileConvertServiceImpl implements FileConvertService{
         fileConvert.setCreateTime(new Date());
         fileConvert.setUpdateTime(new Date());
         fileConvertMapper.insert(fileConvert);
+    }
+
+    public String proposeInsert(ProposeInfoQo proposeInfoQo) {
+        ProposeInfo proposeInfo = new ProposeInfo();
+        proposeInfo.setProposeContent(proposeInfoQo.getTextInfo());
+        proposeInfo.setCreateTime(new Date());
+        proposeInfo.setUpdateTime(new Date());
+        proposeInfoMapper.insert(proposeInfo);
+        return "";
     }
 }
