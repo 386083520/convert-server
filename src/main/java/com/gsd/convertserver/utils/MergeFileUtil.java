@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.logging.Logger;
 
 @Slf4j
 @Component
@@ -39,7 +40,10 @@ public class MergeFileUtil {
                 al.add(new FileInputStream(new File(srcFile, i+"")));
             }
             Enumeration<FileInputStream> en = Collections.enumeration(al);
-            file = new File(srcFile + name);
+            String[] splitName = name.split("\\.");
+            String type = splitName[splitName.length-1];
+            String tempFileName = System.currentTimeMillis() + "." + type;
+            file = new File(srcFile + tempFileName);
             sis = new SequenceInputStream(en);
             fos = new FileOutputStream(file);
             int len = 0;
@@ -48,7 +52,8 @@ public class MergeFileUtil {
                 fos.write(buf, 0, len);
             }
             is = new FileInputStream(file);
-            dealFile(is, file.length(), file.getName(), uuid, convertType);
+            log.info("fileName:",file.getName());
+            dealFile(is, file.length(), tempFileName, uuid, convertType);
         } catch (Exception e) {
             e.printStackTrace();
         }finally {
@@ -87,6 +92,7 @@ public class MergeFileUtil {
     public void dealFile(InputStream is, long length, String name, String uuid, String convertType) {
         log.info("length: {}, name: {}", length, name);
         StorePath storePath = storageClient.uploadFile(is, length, name, null);
+        log.info("storePath.getFullPath:", storePath.getFullPath());
         if (!StringUtils.isEmpty(storePath.getFullPath())){
             FileUpload fileUpload = new FileUpload();
             fileUpload.setUuid(uuid);
